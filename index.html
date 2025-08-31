@@ -1357,11 +1357,9 @@
                 id: 16,
                 name: "Membership Card Design",
                 description: "Professional and secure membership or loyalty card designs to enhance customer retention programs.",
-                hasPages: false,
+                hasPages: true,
                 packages: [
-                    { name: "Starter", price: 200 },
-                    { name: "Premium", price: 400 },
-                    { name: "Pro", price: 600 }
+                    { name: "Standard", price: 200, includedPages: 1, pagePrice: 30, maxPages: 50 }
                 ]
             },
 
@@ -1475,7 +1473,7 @@
                 description: "Elegant and formal certificate design for awards, achievements, and recognition, with customizable text fields.",
                 hasPages: true,
                 packages: [
-                    { name: "Standard", price: 200, includedPages: 1, pagePrice: 30, maxPages: 100 }
+                    { name: "Standard", price: 200, includedPages: 1, pagePrice: 30, maxPages: 50 }
                 ]
             },
 
@@ -2169,5 +2167,6 @@
 </body>
 
 </html>
+
 
 
