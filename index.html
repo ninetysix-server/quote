@@ -1377,15 +1377,13 @@
             },
 
             // Sticker/Product Label Design
-            {
+             {
                 id: 18,
                 name: "Sticker/Product Label Design",
                 description: "Custom sticker and product label designs that are vibrant, durable, and compliant with necessary regulations.",
-                hasPages: false,
+                hasPages: true,
                 packages: [
-                    { name: "Starter", price: 200 },
-                    { name: "Premium", price: 400 },
-                    { name: "Pro", price: 600 }
+                    { name: "Standard", price: 200, includedPages: 1, pagePrice: 60, maxPages: 10 }
                 ]
             },
 
@@ -1517,9 +1515,9 @@
                     description: "Comprehensive and professional company profile document design to impress investors and clients. Up to 5 pages",
                     hasPages: false,
                     packages: [
-                        { name: "Starter", price: 700 },
-                        { name: "Premium", price: 1400 },
-                        { name: "Pro", price: 2100 }
+                        { name: "Starter", price: 600 },
+                        { name: "Premium", price: 800 },
+                        { name: "Pro", price: 1600 }
                     ]
                         },
                 {
@@ -1548,17 +1546,40 @@
                 packages: [
                     { name: "Pro", price: 2700, includedPages: 1, pagePrice: 2700, maxPages: 5 }
                 ]
-            }, {
+            },
+            {
                     id: 33,
-                    name: "User System Essentials",
+                    name: "User System Essentials - Starter",
                     description: "A secure user login system with integrated forms and database architecture to manage and protect customer data and interactions.",
                     hasPages: false,
                     packages: [
-                        { name: "Enterprice Form", price: 600 },
+                        { name: "Contact Form", price: 600 },
                         { name: "Advanced Login", price: 1200 },
                         { name: "Enterprice DB", price: 1500 }
                     ]
-                        }
+                        },
+            {
+                    id: 34,
+                    name: "User System Essentials - Premium",
+                    description: "A secure user login system with integrated forms and database architecture to manage and protect customer data and interactions.",
+                    hasPages: false,
+                    packages: [
+                        { name: "Contact Form", price: 1200 },
+                        { name: "Advanced Login", price: 5000 },
+                        { name: "Enterprice DB", price: 12000 }
+                    ]
+                        },
+            {
+                    id: 35,
+                    name: "User System Essentials - Pro",
+                    description: "A secure user login system with integrated forms and database architecture to manage and protect customer data and interactions.",
+                    hasPages: false,
+                    packages: [
+                        { name: "Contact Form", price: 1800 },
+                        { name: "Advanced Login", price: 7500 },
+                        { name: "Enterprice DB", price: 18000 }
+                    ]
+                        },
         ];
 
         // Customer discount data (simulated database)
@@ -2167,6 +2188,7 @@
 </body>
 
 </html>
+
 
 
 
