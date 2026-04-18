@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>FasFood | Shop Terms & Conditions | A 96 Studios Service</title>
+  <!-- Google Fonts + Font Awesome -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- jsPDF library for PDF export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #f4f6fa;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      line-height: 1.5;
+      color: #1e293b;
+      padding: 2rem 1rem;
+    }
+
+    .terms-container {
+      max-width: 1100px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 2rem;
+      box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    .terms-header {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      padding: 2rem 2.5rem;
+      color: white;
+    }
+
+    .parent-brand {
+      font-size: 0.75rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      opacity: 0.75;
+      margin-bottom: 0.5rem;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .brand i {
+      font-size: 2rem;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+    }
+
+    .brand h1 {
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+      margin: 0;
+    }
+
+    .brand h1 span {
+      font-weight: 500;
+      font-size: 1rem;
+      opacity: 0.9;
+    }
+
+    .studio-badge {
+      background: rgba(255,255,255,0.12);
+      border-radius: 40px;
+      padding: 0.25rem 1rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+      font-size: 0.8rem;
+    }
+
+    .studio-badge i {
+      font-size: 0.9rem;
+    }
+
+    .tagline {
+      font-size: 0.9rem;
+      opacity: 0.85;
+      margin-top: 12px;
+      border-left: 3px solid rgba(255,255,255,0.4);
+      padding-left: 14px;
+    }
+
+    .last-updated {
+      margin-top: 1rem;
+      font-size: 0.75rem;
+      background: rgba(255,255,255,0.1);
+      display: inline-block;
+      padding: 0.25rem 1rem;
+      border-radius: 40px;
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: flex-end;
+      gap: 1rem;
+      padding: 1.2rem 2rem;
+      background: #ffffff;
+      border-bottom: 1px solid #eef2f6;
+      flex-wrap: wrap;
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid #e2e8f0;
+      padding: 0.6rem 1.3rem;
+      border-radius: 40px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: #1e293b;
+    }
+
+    .btn-outline i {
+      font-size: 1rem;
+      color: #f0572d;
+    }
+
+    .btn-outline:hover {
+      background: #f8fafc;
+      border-color: #f0572d;
+      transform: translateY(-1px);
+    }
+
+    .btn-primary-solid {
+      background: linear-gradient(125deg, #f0572d, #ff7b42);
+      border: none;
+      padding: 0.6rem 1.3rem;
+      border-radius: 40px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: white;
+      box-shadow: 0 4px 8px rgba(240,87,45,0.2);
+    }
+
+    .btn-primary-solid:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 18px rgba(240,87,45,0.3);
+    }
+
+    .terms-content {
+      padding: 2rem 2.5rem;
+    }
+
+    .terms-content h2 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-top: 1.8rem;
+      margin-bottom: 0.8rem;
+      color: #0f172a;
+      border-left: 5px solid #f0572d;
+      padding-left: 1rem;
+    }
+
+    .terms-content h2:first-of-type {
+      margin-top: 0;
+    }
+
+    .terms-content h3 {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin: 1.4rem 0 0.6rem 0;
+      color: #1e293b;
+    }
+
+    .terms-content p {
+      margin-bottom: 1rem;
+      color: #334155;
+    }
+
+    .important-box {
+      background: #fff8ed;
+      border-left: 5px solid #f0572d;
+      padding: 1.2rem 1.5rem;
+      border-radius: 1rem;
+      margin: 1.5rem 0;
+    }
+
+    .important-box p {
+      margin-bottom: 0.5rem;
+    }
+
+    .important-box strong {
+      color: #b45309;
+    }
+
+    .terms-content ul, .terms-content ol {
+      margin: 0.8rem 0 1.2rem 1.8rem;
+      color: #334155;
+    }
+
+    .terms-content li {
+      margin: 0.4rem 0;
+    }
+
+    .bank-details {
+      background: #f8fafc;
+      padding: 1rem 1.5rem;
+      border-radius: 1rem;
+      border: 1px solid #e2e8f0;
+      font-family: monospace;
+      font-size: 0.9rem;
+      margin: 1rem 0;
+    }
+
+    .studio-services {
+      background: #f1f5f9;
+      padding: 1.2rem 1.5rem;
+      border-radius: 1rem;
+      margin: 1.5rem 0;
+      text-align: center;
+    }
+
+    .studio-services h4 {
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+      color: #0f172a;
+    }
+
+    .service-tags {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1rem;
+    }
+
+    .service-tags span {
+      background: white;
+      padding: 0.3rem 1rem;
+      border-radius: 40px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: #1e293b;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    hr {
+      margin: 1.8rem 0;
+      border: 0;
+      height: 1px;
+      background: linear-gradient(to right, #e2e8f0, transparent);
+    }
+
+    .footer-note {
+      margin-top: 2rem;
+      padding-top: 1rem;
+      font-size: 0.75rem;
+      text-align: center;
+      color: #64748b;
+      border-top: 1px solid #eef2f6;
+    }
+
+    @media (max-width: 700px) {
+      .terms-header {
+        padding: 1.5rem;
+      }
+      .terms-content {
+        padding: 1.5rem;
+      }
+      .toolbar {
+        padding: 1rem 1.5rem;
+      }
+      .brand h1 {
+        font-size: 1.5rem;
+      }
+      .terms-content h2 {
+        font-size: 1.3rem;
+      }
+    }
+
+    @media print {
+      body {
+        background: white;
+        padding: 0;
+        margin: 0;
+      }
+      .toolbar {
+        display: none;
+      }
+      .terms-container {
+        box-shadow: none;
+        border-radius: 0;
+        max-width: 100%;
+      }
+      .terms-header {
+        background: #1a1a2e;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .btn-primary-solid, .btn-outline {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="terms-container" id="termsDocument">
+  <div class="terms-header">
+    <div class="parent-brand"><i class="fas fa-copyright"></i> A DIVISION OF</div>
+    <div class="brand">
+      <i class="fas fa-store"></i>
+      <h1>FasFood <span>· Shop Platform</span></h1>
+    </div>
+    <div class="studio-badge">
+      <i class="fas fa-cube"></i> Fully owned & operated by <strong>96 Studios</strong>
+    </div>
+    <div class="tagline">Software-as-a-Service | Technology provider for food businesses</div>
+    <div class="last-updated"><i class="far fa-calendar-alt"></i> Last updated: April 2026</div>
+  </div>
+
+  <div class="toolbar">
+    <button class="btn-outline" id="printBtn"><i class="fas fa-print"></i> Print / Save as PDF</button>
+    <button class="btn-primary-solid" id="downloadPdfBtn"><i class="fas fa-file-pdf"></i> Download PDF</button>
+  </div>
+
+  <div class="terms-content">
+    <div class="important-box">
+      <i class="fas fa-info-circle" style="color: #f0572d; margin-right: 8px;"></i>
+      <strong>IMPORTANT – READ CAREFULLY</strong>
+      <p>FasFood is a service of <strong>96 Studios</strong> – a technology and creative agency. We are <strong>strictly a software provider</strong>. We do not own, operate, or control any shop. We have no involvement in customer-shop disputes, food quality, refunds, or delivery. By registering and using the FasFood platform, you acknowledge and agree to these terms.</p>
+    </div>
+
+    <h2>1. Nature of Our Relationship</h2>
+    <p><strong>1.1 We Are a Technology Provider Only.</strong> FasFood (a service of 96 Studios) provides a software platform (SaaS) that enables Shops to manage online ordering, menus, and operations. We do not own, manage, or operate any food business.</p>
+    <p><strong>1.2 No Agency or Partnership.</strong> These Terms do not create any agency, partnership, joint venture, employment, or franchise relationship.</p>
+    <p><strong>1.3 Shops Operate Independently.</strong> You are solely responsible for food quality, safety, delivery, customer service, refunds, legal compliance, and all disputes with your customers. FasFood / 96 Studios does not mediate, investigate, or resolve customer-shop conflicts.</p>
+    <p><strong>1.4 No Customer Reporting to FasFood.</strong> Customers have no right to report complaints to us about your shop. If a customer contacts FasFood, we will redirect them to you. We do not accept, process, or act upon any customer complaints regarding food, service, or delivery.</p>
+
+    <h2>2. Platform License and Use</h2>
+    <p><strong>2.1 License Grant.</strong> FasFood grants you a non-exclusive, non-transferable, revocable license to access the FasFood platform (admin dashboard, menu tools, order management) for operating your food business.</p>
+    <p><strong>2.2 Restrictions.</strong> You may not reverse engineer, modify, copy, or misuse the platform. You may not use the platform for illegal activities or to scrape customer data beyond order fulfillment.</p>
+    <p><strong>2.3 Account Security.</strong> You are responsible for safeguarding your login credentials. Any activity under your account is your responsibility.</p>
+
+    <h2>3. Shop Responsibilities & Indemnification</h2>
+    <p><strong>3.1 Sole Responsibility for Customers.</strong> Your relationship with customers is entirely separate from FasFood/96 Studios. Any agreements, promotions, or guarantees you offer are binding only on you.</p>
+    <p><strong>3.2 No Customer Complaints to FasFood.</strong> Customers cannot file complaints against Shops with FasFood. We do not investigate or take action based on customer reports. All customer service issues must be handled directly by the Shop.</p>
+    <p><strong>3.3 Indemnification.</strong> You agree to indemnify, defend, and hold harmless FasFood, 96 Studios, and their officers, employees, and agents from any claims, damages, losses, or expenses (including legal fees) arising from: (i) disputes between you and your customers; (ii) food quality or safety claims; (iii) violation of any law by your Shop; (iv) any injury or damage caused by your products or services.</p>
+    <p><strong>3.4 No Liability for Disputes.</strong> Under no circumstances shall FasFood or 96 Studios be liable for any direct, indirect, or consequential damages arising from any argument, conflict, or dispute between you and any customer.</p>
+
+    <h2>4. Financial Terms & Subscription Fees</h2>
+    <p><strong>4.1 Monthly Fee Structure.</strong> Your monthly subscription is calculated as follows:</p>
+    <ul>
+      <li><strong>Base Menu Fee:</strong> R150 for up to 10 menu items. R15 for each additional item beyond 10.</li>
+      <li><strong>Till System Fee:</strong> R50 per month (if enabled).</li>
+      <li><strong>Extra Add‑ons Fee:</strong> R10 per month for each extra add-on beyond the first 3 free add-ons.</li>
+      <li><strong>Advertisement Fees:</strong> As agreed for any paid ads.</li>
+      <li><strong>Penalty Fee:</strong> R100 for reactivation after suspension.</li>
+    </ul>
+    <p><strong>4.2 First Month Free.</strong> New Shops receive the first month free of charge ("pay_next" status).</p>
+    <p><strong>4.3 Due Date & Grace Period.</strong> Fees are due on the 1st of each month. A 3-day grace period applies (payment by the 3rd is considered on time). Accounts unpaid after the 3rd will be marked "Overdue".</p>
+    <p><strong>4.4 Suspension for Non-Payment.</strong> FasFood may suspend or terminate access for overdue accounts. Reactivation incurs a R100 penalty.</p>
+
+    <div class="bank-details">
+      <i class="fas fa-university" style="margin-right: 8px; color:#f0572d;"></i> <strong>Official Payment Details:</strong><br>
+      Bank: First National Bank (FNB)<br>
+      Account Name: 96 Studios (Pty) Ltd<br>
+      Account Number: 628 309 876 54<br>
+      Branch Code: 250655<br>
+      <strong>Reference:</strong> Your unique Payment Reference (provided in Shop Portal)
+    </div>
+
+    <h2>5. Platform Suspension and Termination</h2>
+    <p><strong>5.1 Suspension.</strong> FasFood may suspend your access for non-payment, violation of these Terms, or any activity that threatens platform security.</p>
+    <p><strong>5.2 Termination by You.</strong> You may terminate your account at any time by contacting support. Fees already paid are non-refundable.</p>
+    <p><strong>5.3 Termination by Us.</strong> We may terminate your account for breach of these Terms. A penalty fee may apply for reactivation.</p>
+
+    <h2>6. Disclaimer of Warranties</h2>
+    <p>TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE FASFOOD PLATFORM IS PROVIDED “AS IS” AND “AS AVAILABLE” WITHOUT WARRANTIES OF ANY KIND, WHETHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, OR NON-INFRINGEMENT. WE DO NOT WARRANT THAT THE PLATFORM WILL BE UNINTERRUPTED OR ERROR-FREE. <strong>WE SPECIFICALLY DISCLAIM ANY LIABILITY RELATED TO FOOD QUALITY, SAFETY, DELIVERY, OR CUSTOMER DISPUTES.</strong></p>
+
+    <h2>7. Limitation of Liability</h2>
+    <p>TO THE MAXIMUM EXTENT PERMITTED BY LAW, IN NO EVENT SHALL FASFOOD OR 96 STUDIOS BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, INCLUDING LOSS OF PROFITS, DATA, GOODWILL, OR OTHER INTANGIBLE LOSSES, ARISING OUT OF OR RELATED TO YOUR USE OF THE PLATFORM OR ANY DISPUTE BETWEEN YOU AND YOUR CUSTOMERS. OUR TOTAL LIABILITY TO YOU FOR ANY CLAIM SHALL NOT EXCEED THE TOTAL FEES PAID BY YOU TO US IN THE THREE (3) MONTHS PRECEDING THE CLAIM.</p>
+
+    <h2>8. No Refund or Mediation Obligations</h2>
+    <p><strong>8.1 No Refund Obligations.</strong> FasFood/96 Studios has no obligation to issue refunds to your customers. Refunds, credits, or adjustments are solely your responsibility.</p>
+    <p><strong>8.2 No Mediation.</strong> We will not mediate, arbitrate, or involve ourselves in any dispute, argument, or conflict between you and any customer. We will not accept or process any customer complaints about Shops.</p>
+
+    <h2>9. Modifications to Terms</h2>
+    <p>FasFood reserves the right to modify these Terms at any time. Material changes will be notified via the admin dashboard or email. Continued use of the platform after notice constitutes acceptance of the modified Terms.</p>
+
+    <h2>10. Governing Law</h2>
+    <p>These Terms shall be governed by and construed in accordance with the laws of the Republic of South Africa.</p>
+
+    <div class="studio-services">
+      <h4><i class="fas fa-crown"></i> About 96 Studios</h4>
+      <p style="font-size: 0.9rem;">FasFood is a proud service of <strong>96 Studios</strong> — a creative and technical agency specializing in:</p>
+      <div class="service-tags">
+        <span><i class="fas fa-pen-fancy"></i> Graphic Design</span>
+        <span><i class="fas fa-laptop-code"></i> Computer & Software Maintenance</span>
+        <span><i class="fas fa-camera"></i> Photography</span>
+        <span><i class="fas fa-palette"></i> Wall Art & Décor</span>
+      </div>
+      <p style="font-size: 0.8rem; margin-top: 12px;"><i class="fas fa-globe"></i> Innovation through design, technology, and visual storytelling.</p>
+    </div>
+
+    <h2>11. Contact Information (Platform Support Only)</h2>
+    <p><i class="fas fa-envelope" style="color:#f0572d;"></i> <strong>Email:</strong> support@96studios.co.za<br>
+    <i class="fas fa-phone-alt" style="color:#f0572d;"></i> <strong>Phone:</strong> +27 81 792 5033<br>
+    <strong>Note:</strong> We do not accept customer complaints about shops. All service inquiries must be directed to the Shop directly.</p>
+
+    <hr>
+    <p style="font-size: 0.85rem; text-align: center;"><strong>ACKNOWLEDGMENT</strong><br>By registering for and using the FasFood platform (a service of 96 Studios), you acknowledge that you have read, understood, and agree to be bound by these Terms and Conditions. You specifically acknowledge that FasFood / 96 Studios is not responsible for and will not be involved in any disputes between you and your customers.</p>
+
+    <div class="footer-note">
+      <i class="far fa-registered"></i> FasFood – A division of 96 Studios | Graphic Design • IT Maintenance • Photography • Wall Art & Décor
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    const printBtn = document.getElementById('printBtn');
+    const downloadBtn = document.getElementById('downloadPdfBtn');
+    const elementToExport = document.getElementById('termsDocument');
+
+    printBtn.addEventListener('click', () => {
+      window.print();
+    });
+
+    downloadBtn.addEventListener('click', async () => {
+      const originalText = downloadBtn.innerHTML;
+      downloadBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Generating PDF...';
+      downloadBtn.disabled = true;
+
+      try {
+        const { jsPDF } = window.jspdf;
+        
+        const cloneContainer = document.createElement('div');
+        cloneContainer.style.width = '800px';
+        cloneContainer.style.background = 'white';
+        cloneContainer.style.padding = '20px';
+        cloneContainer.style.margin = '0 auto';
+        cloneContainer.style.fontFamily = "'Inter', system-ui, sans-serif";
+        
+        const originalContent = document.getElementById('termsDocument');
+        const cloneContent = originalContent.cloneNode(true);
+        
+        const toolbarClone = cloneContent.querySelector('.toolbar');
+        if (toolbarClone) toolbarClone.remove();
+        
+        cloneContainer.appendChild(cloneContent);
+        cloneContainer.style.position = 'absolute';
+        cloneContainer.style.top = '-9999px';
+        cloneContainer.style.left = '-9999px';
+        document.body.appendChild(cloneContainer);
+        
+        const pdf = new jsPDF({
+          orientation: 'portrait',
+          unit: 'mm',
+          format: 'a4',
+          hotfixes: ['px_scaling']
+        });
+        
+        await pdf.html(cloneContainer, {
+          x: 10,
+          y: 10,
+          html2canvas: {
+            scale: 0.28,
+            useCORS: true,
+            letterRendering: true
+          },
+          windowWidth: cloneContainer.scrollWidth,
+          callback: function(pdfDoc) {
+            pdfDoc.save('FasFood_Shop_Terms_Conditions.pdf');
+          }
+        });
+        
+        document.body.removeChild(cloneContainer);
+        
+      } catch (error) {
+        console.error('PDF error:', error);
+        alert('Could not generate PDF. Using browser print instead.');
+        window.print();
+      } finally {
+        downloadBtn.innerHTML = originalText;
+        downloadBtn.disabled = false;
+      }
+    });
+  })();
+</script>
+</body>
+</html>
