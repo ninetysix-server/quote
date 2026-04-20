@@ -569,6 +569,16 @@
                 margin-top: 40px;
             }
         }
+
+        .signature-on-pdf {
+            position: absolute;
+            bottom: 0px;
+            left: 80px;
+            max-width: 180px;
+            max-height: 60px;
+            z-index: 100;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -681,13 +691,14 @@
 
     <div id="step4Panel" class="step-card hidden-step">
         <div class="d-flex justify-content-between flex-wrap mb-2 no-print">
-            <h6 class="fw-bold mb-0"> Quotation (ERP Style)</h6>
-            <div>
-                <button class="btn btn-outline-sm me-2" id="addStampBtn"><i class="fas fa-stamp"></i> Add Stamp</button>
-                <button class="btn btn-outline-sm me-2" id="printQuoteBtn"><i class="fas fa-print"></i> Print</button>
-                <button class="btn btn-primary-sm" id="downloadPdfFinalBtn"><i class="fas fa-download"></i> PDF</button>
-            </div>
+    <h6 class="fw-bold mb-0"> Quotation (ERP Style)</h6>
+    <div>
+        <button class="btn btn-outline-sm me-2" id="addSignatureBtn"><i class="fas fa-signature"></i> Add Signature</button>
+        <button class="btn btn-outline-sm me-2" id="addStampBtn"><i class="fas fa-stamp"></i> Add Stamp</button>
+        <button class="btn btn-outline-sm me-2" id="printQuoteBtn"><i class="fas fa-print"></i> Print</button>
+        <button class="btn btn-primary-sm" id="downloadPdfFinalBtn"><i class="fas fa-download"></i> PDF</button>
         </div>
+    </div>
         <div id="erpPreviewContainer" class="erp-quotation"></div>
         <div class="mt-2 no-print"><button class="btn btn-link text-muted p-0" id="backToStep3From4" style="font-size:0.7rem;"><i class="fas fa-edit"></i> Edit quotation</button></div>
     </div>
@@ -748,7 +759,9 @@
     let discountPercent = 0;
     let manualServicesAdded = [];
     let stampActive = false;
+    let signatureActive = false;
     const stampImageUrl = "/assets/images/stamp.png";
+    const signatureImageUrl = "/assets/images/signature.png";
     
     function renderServicesUI() {
         const container = document.getElementById("servicesContainer");
@@ -862,95 +875,106 @@
     }
     
     function generateErpQuotationHTML() {
-        const fullName = document.getElementById("fullName").value.trim() || "Guest Client";
-        const company = document.getElementById("companyName").value.trim() || "—";
-        const phone = document.getElementById("phone").value.trim() || "—";
-        const email = document.getElementById("email").value.trim() || "—";
-        const postalAddr = document.getElementById("postalAddress").value.trim() || "N/A";
-        const zip = document.getElementById("zipCode").value.trim() || "";
-        const physicalAddr = document.getElementById("physicalAddress").value.trim() || "Same as postal";
-        const subtotal = selectedItemsList.reduce((s,i)=>s+i.lineTotal,0);
-        const discountAmt = subtotal * (discountPercent/100);
-        const total = subtotal - discountAmt;
-        const docNumber = "96QT-" + Date.now().toString().slice(-6);
-        const today = new Date().toLocaleDateString('en-ZA');
-        const userEmail = email;
-        const currentDocType = document.getElementById("docTypeSelect").value;
-        const currentInvoiceStatus = document.getElementById("invoiceStatusSelect")?.value || "Pending";
-        const currentPartialAmount = parseFloat(document.getElementById("partialAmountPaid")?.value) || 0;
-        const currentDueDate = document.getElementById("dueDate")?.value || "";
-        
-        let invoiceStatusHtml = "";
-        if(currentDocType === "Invoice") {
-            let statusClass = currentInvoiceStatus === "Pending" ? "status-Pending" : (currentInvoiceStatus === "Partial" ? "status-Partial" : "status-Paid");
-            invoiceStatusHtml = `<div class="status-badge ${statusClass}">Status: ${currentInvoiceStatus}</div>`;
-            if(currentInvoiceStatus === "Partial") {
-                invoiceStatusHtml += `<div class="small mt-1">Partial Paid: R${currentPartialAmount.toFixed(2)} | Due: ${currentDueDate || "Not set"}</div>`;
-            } else if(currentDueDate) {
-                invoiceStatusHtml += `<div class="small mt-1">Due Date: ${currentDueDate}</div>`;
-            }
+    const fullName = document.getElementById("fullName").value.trim() || "Guest Client";
+    const company = document.getElementById("companyName").value.trim() || "—";
+    const phone = document.getElementById("phone").value.trim() || "—";
+    const email = document.getElementById("email").value.trim() || "—";
+    const postalAddr = document.getElementById("postalAddress").value.trim() || "N/A";
+    const zip = document.getElementById("zipCode").value.trim() || "";
+    const physicalAddr = document.getElementById("physicalAddress").value.trim() || "Same as postal";
+    const subtotal = selectedItemsList.reduce((s,i)=>s+i.lineTotal,0);
+    const discountAmt = subtotal * (discountPercent/100);
+    const total = subtotal - discountAmt;
+    const docNumber = "96QT-" + Date.now().toString().slice(-6);
+    const today = new Date().toLocaleDateString('en-ZA');
+    const userEmail = email;
+    const currentDocType = document.getElementById("docTypeSelect").value;
+    const currentInvoiceStatus = document.getElementById("invoiceStatusSelect")?.value || "Pending";
+    const currentPartialAmount = parseFloat(document.getElementById("partialAmountPaid")?.value) || 0;
+    const currentDueDate = document.getElementById("dueDate")?.value || "";
+    
+    let invoiceStatusHtml = "";
+    if(currentDocType === "Invoice") {
+        let statusClass = currentInvoiceStatus === "Pending" ? "status-Pending" : (currentInvoiceStatus === "Partial" ? "status-Partial" : "status-Paid");
+        invoiceStatusHtml = `<div class="status-badge ${statusClass}">Status: ${currentInvoiceStatus}</div>`;
+        if(currentInvoiceStatus === "Partial") {
+            invoiceStatusHtml += `<div class="small mt-1">Partial Paid: R${currentPartialAmount.toFixed(2)} | Due: ${currentDueDate || "Not set"}</div>`;
+        } else if(currentDueDate) {
+            invoiceStatusHtml += `<div class="small mt-1">Due Date: ${currentDueDate}</div>`;
         }
-        
-        setTimeout(() => {
-            const canvasElem = document.getElementById("dynamicBarcodeCanvas");
-            if(canvasElem) JsBarcode(canvasElem, docNumber, { format: "CODE128", width: 1.3, height: 28, displayValue: true, fontSize: 10 });
-        }, 60);
-        
-        let itemsHtml = "";
-        selectedItemsList.forEach(item => {
-            let code = item.isManual ? "MANUAL" : `SVC-${item.id}`;
-            let description = `${item.name} - ${item.pkgName}${item.pages ? ` (${item.pages} p.)` : ''}`;
-            let unitPrice = (item.lineTotal / item.quantity).toFixed(2);
-            itemsHtml += `<tr><td style="font-size:0.7rem;">${code}</td><td style="font-size:0.7rem;">${description}</td><td style="font-size:0.7rem;">Each</td><td style="font-size:0.7rem;">${item.quantity}</td><td style="font-size:0.7rem;">R${Number(unitPrice).toLocaleString()}</td><td style="font-size:0.7rem;">${discountPercent>0 ? discountPercent+"%" : "0%"}</td><td class="text-end" style="font-size:0.7rem;">R${item.lineTotal.toLocaleString()}</td></tr>`;
-        });
-        
-        const stampHtml = stampActive ? `<img src="${stampImageUrl}" style="position:absolute; bottom:60px; right:120px; max-width:300px; opacity:0.8;">` : '';
-        
-        return `
-        <div style="position: relative;">
-            ${stampHtml}
-            <div class="erp-header">
-                <div class="square-image"><img src="/assets/images/header-logo.png" alt="brand mark"></div>
-                <div style="text-align:left; flex:1; padding-left:10px;">
-                    <h2 style="margin:0;">96 STUDIOS</h2>
-                    <p style="margin:0;">Graphic Design & Web Solutions</p>
-                    <p style="margin:0;">462 Sebayeng, Solomondale, Unit D</p>
-                    <p style="margin:0;">www.96studios.co.za</p>
-                </div>      
-                <div class="right-details">
-                    <strong>Reg:</strong> 2024/003172/07<br>
-                    <strong>PO Box:</strong> 462, 0752
-                </div>
-            </div>
-            <div class="main-invoice-box">
-                <div class="left-client-panel"><div class="account-badge">ACCOUNT SALE</div><strong>Client Information</strong><br>${fullName}<br>${company}<br>${phone}<br>${email}<br><br><strong>Contact:</strong> ${fullName}</div>
-                <div class="right-invoice-panel"><div class="fw-bold fs-6">${currentDocType}</div><div class="barcode-container"><canvas id="dynamicBarcodeCanvas" class="barcode"></canvas></div><div>Document No: ${docNumber}</div><div>Date: ${today}</div><div>User: ${userEmail.split('@')[0] || 'system'}</div>${invoiceStatusHtml}</div>
-            </div>
-            <div class="reference-row"><div class="ref-col">Client Ref: ${docNumber}</div><div class="ref-col">Our Ref: INV-${docNumber}</div><div class="ref-col">Tax: VAT 0%</div><div class="ref-col">Delivery: Digital</div><div class="ref-col">Polokwane</div><div class="ref-col">Terms: 100% adv</div><div class="ref-col">Page: 1/1</div></div>
-            <div class="address-duo"><div class="address-box"><strong>Postal Address</strong><br>${postalAddr}<br>${zip}</div><div class="address-box"><strong>Physical Address</strong><br>${physicalAddr}</div></div>
-            <table class="items-table"><thead><tr><th>Code</th><th>Description</th><th>Unit</th><th>Quantity</th><th>Price</th><th>Discount %</th><th class="text-end">Total</th></tr></thead><tbody>${itemsHtml || '<tr><td colspan="7" class="text-center">— No services —</td></tr>'}</tbody></table>
-            <div class="bottom-split">
-                <div class="banking-left">
-                    <i class="fas fa-university"></i> <strong>Banking details</strong><br>
-                    Standardbank | Acc no: 10214743584 | Branch Code: 051001<br>
-                    Reference: ${docNumber}<br>
-                    Thank you for choosing 96 Studios.
-                </div>
-                <div class="totals-right">
-                    <div class="totals-box">
-                        <div class="total-line"><span>Subtotal:</span><span>R${subtotal.toFixed(2)}</span></div>
-                        <div class="total-line"><span>Discount (${discountPercent}%):</span><span>-R${discountAmt.toFixed(2)}</span></div>
-                        <div class="total-line" style="border-top:1px solid #ccc; margin-top:6px; padding-top:6px;"><span><b>TOTAL</b></span><span><b>R${total.toFixed(2)}</b></span></div>
-                    </div>
-                </div>
-            </div>
-            <div class="signature-area" style="margin-top:60px;">
-                <div>Signature:<div class="sign-field"></div></div>
-                <div>Name:<div class="sign-field"></div></div>
-                <div>Date:<div class="sign-field"></div></div>
-            </div>
-        </div>`;
     }
+    
+    setTimeout(() => {
+        const canvasElem = document.getElementById("dynamicBarcodeCanvas");
+        if(canvasElem) JsBarcode(canvasElem, docNumber, { format: "CODE128", width: 1.3, height: 28, displayValue: true, fontSize: 10 });
+    }, 60);
+    
+    let itemsHtml = "";
+    selectedItemsList.forEach(item => {
+        let code = item.isManual ? "MANUAL" : `SVC-${item.id}`;
+        let description = `${item.name} - ${item.pkgName}${item.pages ? ` (${item.pages} p.)` : ''}`;
+        let unitPrice = (item.lineTotal / item.quantity).toFixed(2);
+        itemsHtml += `<tr><td style="font-size:0.7rem;">${code}</td><td style="font-size:0.7rem;">${description}</td><td style="font-size:0.7rem;">Each</td><td style="font-size:0.7rem;">${item.quantity}</td><td style="font-size:0.7rem;">R${Number(unitPrice).toLocaleString()}</td><td style="font-size:0.7rem;">${discountPercent>0 ? discountPercent+"%" : "0%"}</td><td class="text-end" style="font-size:0.7rem;">R${item.lineTotal.toLocaleString()}</td></tr>`;
+    });
+    
+    const stampHtml = stampActive ? `<img src="${stampImageUrl}" style="position:absolute; bottom:60px; right:120px; max-width:300px; opacity:0.8;">` : '';
+    const signatureHtml = signatureActive ? `<img src="${signatureImageUrl}" class="signature-on-pdf" style="display:block;">` : '';
+    
+    // Get current date for signature
+    const currentDate = new Date().toLocaleDateString('en-ZA');
+    
+    return `
+    <div style="position: relative;">
+        ${stampHtml}
+        ${signatureHtml}
+        <div class="erp-header">
+            <div class="square-image"><img src="/assets/images/header-logo.png" alt="brand mark"></div>
+            <div style="text-align:left; flex:1; padding-left:10px;">
+                <h2 style="margin:0;">96 STUDIOS</h2>
+                <p style="margin:0;">Graphic Design & Web Solutions</p>
+                <p style="margin:0;">462 Sebayeng, Solomondale, Unit D</p>
+                <p style="margin:0;">www.96studios.co.za</p>
+            </div>      
+            <div class="right-details">
+                <strong>Reg:</strong> 2024/003172/07<br>
+                <strong>PO Box:</strong> 462, 0752
+            </div>
+        </div>
+        <div class="main-invoice-box">
+            <div class="left-client-panel"><div class="account-badge">ACCOUNT SALE</div><strong>Client Information</strong><br>${fullName}<br>${company}<br>${phone}<br>${email}<br><br><strong>Contact:</strong> ${fullName}</div>
+            <div class="right-invoice-panel"><div class="fw-bold fs-6">${currentDocType}</div><div class="barcode-container"><canvas id="dynamicBarcodeCanvas" class="barcode"></canvas></div><div>Document No: ${docNumber}</div><div>Date: ${today}</div><div>User: ${userEmail.split('@')[0] || 'system'}</div>${invoiceStatusHtml}</div>
+        </div>
+        <div class="reference-row"><div class="ref-col">Client Ref: ${docNumber}</div><div class="ref-col">Our Ref: INV-${docNumber}</div><div class="ref-col">Tax: VAT 0%</div><div class="ref-col">Delivery: Digital</div><div class="ref-col">Polokwane</div><div class="ref-col">Terms: 100% adv</div><div class="ref-col">Page: 1/1</div></div>
+        <div class="address-duo"><div class="address-box"><strong>Postal Address</strong><br>${postalAddr}<br>${zip}</div><div class="address-box"><strong>Physical Address</strong><br>${physicalAddr}</div></div>
+        <table class="items-table"><thead><tr><th>Code</th><th>Description</th><th>Unit</th><th>Quantity</th><th>Price</th><th>Discount %</th><th class="text-end">Total</th></tr></thead><tbody>${itemsHtml || '<tr><td colspan="7" class="text-center">— No services —</td></tr>'}</tbody></table>
+        <div class="bottom-split">
+            <div class="banking-left">
+                <i class="fas fa-university"></i> <strong>Banking details</strong><br>
+                Standardbank | Acc no: 10214743584 | Branch Code: 051001<br>
+                Reference: ${docNumber}<br>
+                Thank you for choosing 96 Studios.
+            </div>
+            <div class="totals-right">
+                <div class="totals-box">
+                    <div class="total-line"><span>Subtotal:</span><span>R${subtotal.toFixed(2)}</span></div>
+                    <div class="total-line"><span>Discount (${discountPercent}%):</span><span>-R${discountAmt.toFixed(2)}</span></div>
+                    <div class="total-line" style="border-top:1px solid #ccc; margin-top:6px; padding-top:6px;"><span><b>TOTAL</b></span><span><b>R${total.toFixed(2)}</b></span></div>
+                </div>
+            </div>
+        </div>
+        <div class="signature-area" style="margin-top:60px;">
+            <div>Signature:<div class="sign-field">${signatureActive ? '✓' : ''}</div></div>
+            <div>Name:<div class="sign-field">${signatureActive ? 'Sk Mabitsela' : ''}</div></div>
+            <div>Date:<div class="sign-field">${signatureActive ? currentDate : ''}</div></div>
+        </div>
+    </div>`;
+}
+
+    document.getElementById("addSignatureBtn")?.addEventListener("click", function() { 
+    signatureActive = true; 
+    updatePreviewAndShowStep4(); 
+    alert("✅ Signature added!\nName: Sk Mabitsela\nDate: " + new Date().toLocaleDateString('en-ZA')); 
+    });
     
     function updatePreviewAndShowStep4(){
         const previewDiv = document.getElementById("erpPreviewContainer");
