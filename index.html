@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * {
             margin: 0;
@@ -151,6 +152,44 @@
             border-radius: 16px;
             padding: 0.9rem;
             margin-bottom: 0.9rem;
+            transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+        }
+        .service-card:hover {
+            border-color: #a9bdcb;
+            box-shadow: 0 8px 22px rgba(30, 70, 99, 0.08);
+            transform: translateY(-1px);
+        }
+        .catalog-toolbar {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .catalog-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: #537083;
+            font-size: .72rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .catalog-status::before {
+            content: "";
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #f59e0b;
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, .13);
+        }
+        .catalog-status.live::before { background: #22a06b; box-shadow: 0 0 0 3px rgba(34, 160, 107, .13); }
+        .catalog-status.offline::before { background: #64748b; box-shadow: 0 0 0 3px rgba(100, 116, 139, .13); }
+        .service-meta { color: #6b7d8a; font-size: .69rem; margin-bottom: 7px; }
+        .catalog-empty { text-align: center; padding: 34px 16px; color: #64748b; }
+        @media (max-width: 576px) {
+            .catalog-toolbar { grid-template-columns: 1fr; }
+            .catalog-status { white-space: normal; }
         }
         .btn-primary-sm {
             background: #1e4663;
@@ -599,7 +638,7 @@
     </div>
 
     <div id="step1Panel" class="step-card">
-        <h6 class="fw-bold mb-2" style="font-size:0.9rem;"><i class="fa-regular fa-pen-to-square me-1"></i>Select creative services (35+ options)</h6>
+        <h6 class="fw-bold mb-2" style="font-size:0.9rem;"><i class="fa-regular fa-pen-to-square me-1"></i>Select creative services</h6>
         
         <div class="manual-service-section no-print">
             <div class="d-flex justify-content-between align-items-center mb-2">
@@ -619,6 +658,16 @@
             <div id="manualServicesList" class="mt-2"></div>
         </div>
         
+        <div class="catalog-toolbar no-print">
+            <div class="input-group input-group-sm">
+                <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-muted"></i></span>
+                <input type="search" id="serviceSearchInput" class="form-control border-start-0" placeholder="Search services or categories" aria-label="Search services">
+            </div>
+            <div class="d-flex align-items-center gap-2 justify-content-between">
+                <span class="catalog-status" id="catalogStatus" role="status">Connecting to service catalog…</span>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="refreshServicesBtn" title="Refresh services"><i class="fas fa-rotate"></i></button>
+            </div>
+        </div>
         <div id="servicesContainer" style="max-height: 550px; overflow-y: auto; padding-right: 6px;"></div>
         <div class="d-flex justify-content-end mt-3"><button class="btn btn-primary-sm" id="toStep2Btn">Next <i class="fas fa-arrow-right ms-1"></i></button></div>
     </div>
@@ -705,17 +754,8 @@
 </div>
 <div class="total-float no-print" id="floatingTotal">R0.00</div>
 
-     <script src="azure-storage.js" alpha></script>
-        <script src="google-bigquery.js" defer></script>
-        <script src="oracle-db.jsx" catch></script>
-        <script src="aws-server-bundle.js" defer></script>
-        <script src="cloudflare-cdn.js" react></script>
-        <script src="digitalocean-api.js" defer></script>
-        <script src="server-terms.js" defer></script>
-        <script src="app-cloud.js" defer></script>
-
 <script>
-    const servicesCatalog = [
+    const fallbackServicesCatalog = [
         { id:1, name:"Logo Design", hasPages:false, packages:[{name:"Starter",price:300},{name:"Premium",price:600},{name:"Pro",price:900}] },
         { id:2, name:"Poster Design", hasPages:false, packages:[{name:"Starter",price:200},{name:"Premium",price:400},{name:"Pro",price:600}] },
         { id:3, name:"Flyer Design", hasPages:false, packages:[{name:"Starter",price:300},{name:"Premium",price:600},{name:"Pro",price:900}] },
@@ -754,6 +794,7 @@
         { id:36, name:"Stamp Design", hasPages:false, packages:[{name:"Starter",price:100},{name:"Premium",price:200},{name:"Pro",price:300}] },
 
     ];
+    let servicesCatalog = [...fallbackServicesCatalog];
     
     let selectedItemsList = [];
     let discountPercent = 0;
@@ -762,6 +803,114 @@
     let signatureActive = false;
     const stampImageUrl = "/assets/images/stamp.png";
     const signatureImageUrl = "/assets/images/signature.png";
+
+    const SUPABASE_URL = "https://pebkryplphawjlmvcfma.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlYmtyeXBscGhhd2psbXZjZm1hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2ODg2NjEsImV4cCI6MjA5NzI2NDY2MX0.Sn1IPlLKhJG5u6gTXpB_tUbSr4PThWrWVpHUNDG1zdU";
+    const quotationDb = window.supabase?.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    function escapeHtml(value) {
+        return String(value ?? "").replace(/[&<>'"]/g, char => ({
+            "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;"
+        })[char]);
+    }
+
+    function setCatalogStatus(message, mode = "") {
+        const status = document.getElementById("catalogStatus");
+        if (!status) return;
+        status.textContent = message;
+        status.className = `catalog-status ${mode}`.trim();
+    }
+
+    function mapSupabaseService(row) {
+        const hasPages = Boolean(row.has_page_quantity);
+        const pagePrice = Number(row.price_per_page) || 0;
+        const maxPages = Number(row.max_pages) || 0;
+        const tiers = [
+            ["Starter", row.starter_price],
+            ["Premium", row.premium_price],
+            ["Pro", row.pro_price]
+        ].filter(([, price]) => Number(price) > 0);
+
+        let packages = tiers.map(([name, price]) => ({
+            name: hasPages && tiers.length === 1 ? "Standard" : name,
+            price: Number(price),
+            incPages: hasPages ? 1 : 0,
+            pagePrice,
+            maxPages
+        }));
+
+        if (!packages.length && Number(row.base_price) > 0) {
+            packages = [{
+                name: "Standard",
+                price: Number(row.base_price),
+                incPages: hasPages ? 1 : 0,
+                pagePrice,
+                maxPages
+            }];
+        }
+
+        return {
+            id: row.id,
+            name: row.title,
+            category: row.category || "Creative Service",
+            description: row.description || "",
+            hasPages,
+            packages
+        };
+    }
+
+    function mapWebsiteAddons(row) {
+        const groups = row.website_addons || {};
+        return ["starter", "premium", "pro"].flatMap(tier => {
+            const packages = Array.isArray(groups[tier])
+                ? groups[tier].filter(item => Number(item.price) > 0).map(item => ({ name: item.name, price: Number(item.price) }))
+                : [];
+            return packages.length ? [{
+                id: `${row.id}_${tier}`,
+                name: `Website Add-ons — ${tier.charAt(0).toUpperCase() + tier.slice(1)}`,
+                category: row.category || "Website Design",
+                description: `Optional ${tier} website features`,
+                hasPages: false,
+                packages
+            }] : [];
+        });
+    }
+
+    async function loadServicesFromSupabase() {
+        setCatalogStatus("Syncing prices from 96 Studios…");
+        if (!quotationDb) {
+            setCatalogStatus(`${servicesCatalog.length} saved services available`, "offline");
+            return false;
+        }
+
+        try {
+            const { data, error } = await quotationDb
+                .from("services")
+                .select("*")
+                .eq("active", true)
+                .order("display_order", { ascending: true });
+            if (error) throw error;
+
+            const mapped = (data || []).flatMap(row => row.is_addon_service ? mapWebsiteAddons(row) : [mapSupabaseService(row)])
+                .filter(service => service.packages.length);
+            if (!mapped.length) throw new Error("No active priced services returned");
+
+            servicesCatalog = mapped;
+            setCatalogStatus(`${mapped.length} live services · prices up to date`, "live");
+            return true;
+        } catch (error) {
+            console.warn("Live catalog unavailable; using the saved catalog.", error);
+            servicesCatalog = [...fallbackServicesCatalog];
+            setCatalogStatus(`${servicesCatalog.length} saved services · live sync unavailable`, "offline");
+            return false;
+        }
+    }
+
+    async function initialiseServiceCatalog() {
+        await loadServicesFromSupabase();
+        renderServicesUI();
+        recalcAll();
+    }
     
     function renderServicesUI() {
         const container = document.getElementById("servicesContainer");
@@ -769,18 +918,20 @@
         servicesCatalog.forEach(service => {
             const card = document.createElement("div");
             card.className = "service-card";
+            card.dataset.search = `${service.name} ${service.category || ""} ${service.description || ""}`.toLowerCase();
             let pkgRadios = `<div class="mb-2 d-flex flex-wrap gap-2">`;
             service.packages.forEach((pkg, idx) => {
                 let checkedAttr = idx===0 ? 'checked' : '';
-                pkgRadios += `<div class="form-check"><input class="form-check-input pkg-radio" type="radio" name="pkg_${service.id}" value="${pkg.name}" data-price="${pkg.price}" data-incpages="${pkg.incPages || 0}" data-pageprice="${pkg.pagePrice || 0}" data-maxpages="${pkg.maxPages || 0}" id="pkg_${service.id}_${idx}" ${checkedAttr}><label class="form-check-label small" for="pkg_${service.id}_${idx}">${pkg.name} (R${pkg.price})</label></div>`;
+                pkgRadios += `<div class="form-check"><input class="form-check-input pkg-radio" type="radio" name="pkg_${service.id}" value="${escapeHtml(pkg.name)}" data-price="${pkg.price}" data-incpages="${pkg.incPages || 0}" data-pageprice="${pkg.pagePrice || 0}" data-maxpages="${pkg.maxPages || 0}" id="pkg_${service.id}_${idx}" ${checkedAttr}><label class="form-check-label small" for="pkg_${service.id}_${idx}">${escapeHtml(pkg.name)} (R${Number(pkg.price).toLocaleString("en-ZA")})</label></div>`;
             });
             pkgRadios += `</div>`;
             let quantityHtml = `<div class="mt-1"><label class="small me-2">Qty:</label><input type="number" class="form-control form-control-sm d-inline-block w-auto qty-field" data-sid="${service.id}" value="1" min="1" style="width:70px;"></div>`;
             let pagesHtml = "";
             if(service.hasPages){
-                pagesHtml = `<div class="mt-1 pages-block"><label class="small me-2">Pages:</label><input type="number" class="form-control form-control-sm d-inline-block w-auto pages-field" data-pid="${service.id}" value="1" min="1" style="width:70px;"> <span class="small text-muted pages-info"></span></div>`;
+                const serviceMaxPages = Math.max(...service.packages.map(pkg => Number(pkg.maxPages) || 0));
+                pagesHtml = `<div class="mt-1 pages-block"><label class="small me-2">Pages:</label><input type="number" class="form-control form-control-sm d-inline-block w-auto pages-field" data-pid="${service.id}" value="1" min="1" ${serviceMaxPages ? `max="${serviceMaxPages}"` : ""} style="width:70px;"> <span class="small text-muted pages-info">${serviceMaxPages ? `Max ${serviceMaxPages}` : ""}</span></div>`;
             }
-            card.innerHTML = `<div class="form-check form-switch"><input class="form-check-input service-chk" type="checkbox" data-sid="${service.id}" id="chk_${service.id}"> <label class="form-check-label fw-semibold" style="font-size:0.8rem;" for="chk_${service.id}">${service.name}</label></div><p class="small text-secondary mb-1">${service.hasPages ? 'Multi-page project' : 'Fixed package'}</p>${pkgRadios}${quantityHtml}${pagesHtml}`;
+            card.innerHTML = `<div class="form-check form-switch"><input class="form-check-input service-chk" type="checkbox" data-sid="${service.id}" id="chk_${service.id}"> <label class="form-check-label fw-semibold" style="font-size:0.8rem;" for="chk_${service.id}">${escapeHtml(service.name)}</label></div><div class="service-meta">${escapeHtml(service.category || "Creative Service")} · ${service.hasPages ? 'Multi-page project' : 'Fixed package'}</div>${pkgRadios}${quantityHtml}${pagesHtml}`;
             container.appendChild(card);
         });
         attachEvents();
@@ -833,7 +984,7 @@
                         extraCost = Math.max(0, pagesCount - inc) * pagePrice;
                     }
                     const lineTotal = (basePrice + extraCost) * qty;
-                    selectedItemsList.push({ id:service.id, name:service.name, pkgName, quantity:qty, pages: service.hasPages ? pagesCount : null, lineTotal, extraCostPerUnit: extraCost/qty });
+                    selectedItemsList.push({ id:service.id, name:service.name, pkgName, quantity:qty, pages: service.hasPages ? pagesCount : null, lineTotal, extraCostPerUnit: extraCost });
                 }
             }
         });
@@ -1008,15 +1159,20 @@
     
     const urlParams = new URLSearchParams(window.location.search);
     const adminParam = urlParams.get('admin');
-    const isAdminMode = (adminParam === 'confiq2026');
+    const isAdminMode = (adminParam === 'confiq1994');
+
+    // Remove the admin key immediately so it cannot appear in browser print headers,
+    // copied links, screenshots or PDFs. Admin mode remains active for this page load.
+    if (isAdminMode) {
+        window.history.replaceState({}, document.title, `${window.location.pathname}${window.location.hash}`);
+    }
     
     if (isAdminMode) {
         console.log('Admin mode active - chatbot bypassed');
-        renderServicesUI();
-        recalcAll();
-        showStepPanel(1);
+        initialiseServiceCatalog().then(() => showStepPanel(1));
     } else {
         document.getElementById('mainAppContainer').style.display = 'none';
+        loadServicesFromSupabase();
         
         let botState = 'initial';
         let selectedServicesText = [];
@@ -1168,19 +1324,12 @@
         }
         
         function autoSelectServicesFromKeywords() {
-            const catalog = [
-                { id:1, name:"Logo Design", keywords:["logo"] }, { id:2, name:"Poster Design", keywords:["poster"] }, 
-                { id:3, name:"Flyer Design", keywords:["flyer"] }, { id:4, name:"Brochure Design", keywords:["brochure"] },
-                { id:5, name:"Banner Design", keywords:["banner"] }, { id:6, name:"Business Card Design", keywords:["business card"] },
-                { id:10, name:"Menu Design", keywords:["menu"] }, { id:15, name:"Invitation Card Design", keywords:["invitation"] },
-                { id:23, name:"T-Shirt Design", keywords:["t-shirt","tshirt"] }, { id:30, name:"Website Design - Starter", keywords:["website"] },
-                { id:33, name:"User System - Starter", keywords:["user system","login"] }, { id:22, name:"Brand Identity Pack", keywords:["branding"] }
-            ];
             let selectedIds = [];
             selectedServicesText.forEach(serviceReq => {
                 const lowerReq = serviceReq.toLowerCase();
-                for(let svc of catalog) {
-                    if(svc.keywords.some(kw => lowerReq.includes(kw))) {
+                for(let svc of servicesCatalog) {
+                    const serviceWords = svc.name.toLowerCase().replace(/design|service|—/g, " ").split(/\s+/).filter(word => word.length > 2);
+                    if(serviceWords.some(word => lowerReq.includes(word))) {
                         if(!selectedIds.includes(svc.id)) selectedIds.push(svc.id);
                     }
                 }
@@ -1225,6 +1374,28 @@
     });
     
     document.getElementById("applyDiscountBtn")?.addEventListener("click", applyDiscount);
+    document.getElementById("serviceSearchInput")?.addEventListener("input", function() {
+        const term = this.value.trim().toLowerCase();
+        let visibleCount = 0;
+        document.getElementById("catalogEmptyState")?.remove();
+        document.querySelectorAll("#servicesContainer .service-card").forEach(card => {
+            const matches = !term || card.dataset.search.includes(term);
+            card.style.display = matches ? "block" : "none";
+            if (matches) visibleCount++;
+        });
+        if (!visibleCount && term) {
+            document.getElementById("servicesContainer").insertAdjacentHTML("beforeend", '<div class="catalog-empty" id="catalogEmptyState"><i class="fas fa-magnifying-glass fa-2x mb-2"></i><div>No matching services found.</div></div>');
+        }
+    });
+    document.getElementById("refreshServicesBtn")?.addEventListener("click", async function() {
+        if (selectedItemsList.length && !window.confirm("Refreshing will clear the currently selected catalog services. Continue?")) return;
+        this.disabled = true;
+        this.querySelector("i")?.classList.add("fa-spin");
+        await initialiseServiceCatalog();
+        document.getElementById("serviceSearchInput").value = "";
+        this.querySelector("i")?.classList.remove("fa-spin");
+        this.disabled = false;
+    });
     document.getElementById("addStampBtn")?.addEventListener("click", function() { stampActive = true; updatePreviewAndShowStep4(); alert("Stamp added to PDF"); });
     document.getElementById("toStep2Btn").onclick = () => { if(selectedItemsList.length===0 && manualServicesAdded.length===0){ alert("Select at least one service or add manual service."); return; } showStepPanel(2); };
     document.getElementById("backToStep1").onclick = () => showStepPanel(1);
@@ -1237,11 +1408,6 @@
     document.getElementById("docTypeSelect")?.addEventListener("change", toggleInvoiceFields);
     document.getElementById("invoiceStatusSelect")?.addEventListener("change", function() { if(document.getElementById("docTypeSelect").value === "Invoice") { document.getElementById("partialAmountGroup").style.display = this.value === "Partial" ? "block" : "none"; } });
     
-    if (isAdminMode) {
-        renderServicesUI();
-        recalcAll();
-        showStepPanel(1);
-    }
 </script>
 </body>
 </html>
